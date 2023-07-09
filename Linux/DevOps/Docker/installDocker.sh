@@ -22,3 +22,13 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 
 # Verify that the Docker Engine installation is successfully  by running the hello-world image
 docker run hello-world
+
+echo "Installation Complete"
+
+read -p "Enter your username : " username
+
+usermod -aG "username" docker
+
+echo "Username added to group"
+
+exit 0
