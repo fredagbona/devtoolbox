@@ -12,3 +12,5 @@ cp -r /Volumes/Brave\ Browser/Brave\ Browser.app /Applications/
 # Nettoyage...
 hdiutil detach /Volumes/Brave\ Browser/
 rm ~/Downloads/Brave-Browser.dmg
+
+# "Done! "Brave has been successfully installed."
