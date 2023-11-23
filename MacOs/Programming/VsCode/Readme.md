@@ -20,10 +20,13 @@ This Bash script automates the installation of Visual Studio Code (VS Code) on m
 
 ## Note
 
-- An active internet connection is required for the installation process.
+- This script requires an active internet connection for downloading Visual Studio Code.
 - This script does not require superuser privileges, as it installs VS Code to the user's Applications directory.
 - Ensure that you have sufficient permissions to write to the /Applications directory.
 - The script is designed for macOS systems and may not be compatible with other operating systems.
+
+## Additional Notes
+- No superuser privileges are needed to run this script.
 
 ## Disclaimer
 
