@@ -25,9 +25,8 @@ docker run hello-world
 
 echo "Installation Complete"
 
-read -p "Enter your username : " username
 
-usermod -aG "username" docker
+usermod -aG  docker $USER
 
 echo "Username added to group"
 
