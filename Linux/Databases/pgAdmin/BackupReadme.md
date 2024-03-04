@@ -5,8 +5,8 @@ This Bash script automates the backup of pgAdmin database, a popular web-based a
 ## Usage
 1. Download the script or clone his repository from here.
 2. Start your PostgreSQL services.
-3. Complete specified information as credentials , path for restoration, db name.  in `backupPgAdminDB.sh`
-4. Ensure that the script has execution permissions using the command `chmod +x script.sh`.
+3. Complete specified information as credentials , path for backup, db name.  in `backupPgAdminDB.sh`
+4. Ensure that the script has execution permissions using the command `chmod +x backupPgAdminDB.sh`.
 5. Execute the script using the following command:
 
 `sudo ./backupPgAdminDB.sh`
