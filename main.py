@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Constants
 EXCLUDED_FOLDERS = {".git"}
-INSTALL_SCRIPT = "install.sh"
+INSTALL_SCRIPT_PREFIX = "install"
 
 # List all folders in a directory and return as a list
 def list_folders(directory):
@@ -28,7 +28,10 @@ def show_menu(folders, level):
 
 # Execute the install script if present
 def execute_install_script(directory):
-    script_path = Path(directory) / INSTALL_SCRIPT
+    folder_name = Path(directory).name
+    script_name = f"{INSTALL_SCRIPT_PREFIX}{folder_name}.sh"
+    script_path = Path(directory) / script_name
+    
     if script_path.is_file():
         logging.info(f"Executing install script: {script_path}")
         os.system(f"bash {script_path}")
