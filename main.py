@@ -16,12 +16,15 @@ def list_folders(directory):
 
 # Show menu for folder selection
 def show_menu(folders, level):
-    for i, folder in enumerate(folders, 1):
-        print(f"{i}. {folder.name}")
+    count = 1
+    for folder in folders:
+        print(f"{count}. {folder.name}")
+        count += 1
 
     if level > 0:
-        print(f"{len(folders) + 1}. Return")
-    print(f"{len(folders) + 2}. Exit")
+        print(f"{count}. Return")
+        count += 1
+    print(f"{count}. Exit")
 
 # Execute the install script if present
 def execute_install_script(directory):
