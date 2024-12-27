@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Constants
 EXCLUDED_FOLDERS = {".git"}
+INSTALL_SCRIPT = "install.sh"
 
 # List all folders in a directory and return as a list
 def list_folders(directory):
@@ -21,6 +22,15 @@ def show_menu(folders, level):
     if level > 0:
         print(f"{len(folders) + 1}. Return")
     print(f"{len(folders) + 2}. Exit")
+
+# Execute the install script if present
+def execute_install_script(directory):
+    script_path = Path(directory) / INSTALL_SCRIPT
+    if script_path.is_file():
+        logging.info(f"Executing install script: {script_path}")
+        os.system(f"bash {script_path}")
+    else:
+        logging.info(f"No install script found in {directory}")
 
 # Handle user selection
 def handle_selection(folders, level, current_path):
@@ -44,11 +54,16 @@ def navigate_directories(root, level=0):
     current_path = Path(root)
     while True:
         folders = list_folders(current_path)
+        if not folders:
+            execute_install_script(current_path)
+            break
+
         show_menu(folders, level)
         current_path, level = handle_selection(folders, level, current_path)
 
 if __name__ == "__main__":
-    root_directory = input("Enter the root directory: ")
+    #root_directory = input("Enter the root directory: ")
+    root_directory = "."
     if not os.path.isdir(root_directory):
         print(f"Error: {root_directory} is not a valid directory.")
         sys.exit(1)
