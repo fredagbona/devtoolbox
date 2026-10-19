@@ -14,6 +14,8 @@ bash MacOs/Programming/Glim/installGlim.sh --output-dir "$HOME/Downloads/Glim"
 
 The script selects the native architecture, including Apple Silicon when running under Rosetta, resolves the [latest stable release](https://github.com/NeoPanic/Glim/releases/latest), and downloads its DMG into `~/Downloads` by default. It validates the DMG against the SHA-256 file published with that release before exposing the completed download. Matching existing downloads are reused; mismatched files are preserved and the command fails. Choose a different output directory to resolve a conflict.
 
+Downloads ignore curl configuration files, so a local curlrc cannot weaken the requested HTTPS verification. Publication prefers a hard link and falls back to a no-clobber move on volumes without hard-link support.
+
 The checksum detects a damaged or mismatched download; it is obtained from the same release and is not independent publisher authentication. The script expects stable `vMAJOR.MINOR.PATCH` tags and the documented `Glim-VERSION-macos-ARCH.dmg` naming. It stops if those conventions change.
 
 Open the downloaded DMG in Finder and copy Glim.app to Applications. Current Glim DMGs are **not Apple-notarized**; read the official [first-launch instructions](https://github.com/NeoPanic/Glim#download) before opening the app.
