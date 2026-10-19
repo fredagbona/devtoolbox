@@ -36,7 +36,7 @@ case "$(uname -m)" in
     *) glim_error 'only Apple Silicon and Intel Macs are supported' ;;
 esac
 
-glim_release_url=$(curl --connect-timeout 20 --proto '=https' --proto-redir '=https' --fail --location --silent --show-error \
+glim_release_url=$(curl -q --connect-timeout 20 --proto '=https' --proto-redir '=https' --fail --location --silent --show-error \
     --output /dev/null --write-out '%{url_effective}' "$glim_repo/releases/latest")
 glim_release_prefix="$glim_repo/releases/tag/"
 [[ "$glim_release_url" == "$glim_release_prefix"* ]] || glim_error 'unexpected release redirect'
@@ -52,7 +52,7 @@ trap 'rm -rf "$glim_work_dir"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-curl --connect-timeout 20 --proto '=https' --proto-redir '=https' --fail --location --silent --show-error \
+curl -q --connect-timeout 20 --proto '=https' --proto-redir '=https' --fail --location --silent --show-error \
     --output "$glim_work_dir/checksum" "$glim_asset_url.sha256"
 glim_expected_hash=''
 glim_checksum_name=''
@@ -76,11 +76,22 @@ if [[ -e "$glim_destination" || -L "$glim_destination" ]]; then
     exit 0
 fi
 
-curl --connect-timeout 20 --proto '=https' --proto-redir '=https' --fail --location --silent --show-error \
+curl -q --connect-timeout 20 --proto '=https' --proto-redir '=https' --fail --location --silent --show-error \
     --output "$glim_work_dir/$glim_asset" "$glim_asset_url"
 glim_verify "$glim_work_dir/$glim_asset" || glim_error 'download failed SHA-256 verification'
-# A same-filesystem hard link publishes only a verified file, without overwriting a raced destination.
-ln "$glim_work_dir/$glim_asset" "$glim_destination" || glim_error 'destination appeared during download'
+# Prefer an atomic, no-clobber hard link. Some external/cloud volumes do not support it.
+# Use the output DIRECTORY operand so a raced child directory is not treated as a move target.
+if ! ln "$glim_work_dir/$glim_asset" "$glim_output_dir/" 2>/dev/null; then
+    [[ ! -e "$glim_destination" && ! -L "$glim_destination" ]] || \
+        glim_error 'destination appeared during download'
+    mv -n "$glim_work_dir/$glim_asset" "$glim_output_dir/" || \
+        glim_error 'could not publish the verified download'
+    # BSD mv -n can report success when it skips an existing destination.
+    [[ ! -e "$glim_work_dir/$glim_asset" ]] || \
+        glim_error 'destination appeared during download'
+fi
+[[ -f "$glim_destination" ]] && glim_verify "$glim_destination" || \
+    glim_error 'published download could not be verified'
 printf 'Downloaded and verified: %s\n' "$glim_destination"
 printf 'Open the DMG in Finder, then copy Glim.app to Applications.\n'
 printf 'First-launch requirements (the current DMGs are not Apple-notarized): %s#download\n' "$glim_repo"
