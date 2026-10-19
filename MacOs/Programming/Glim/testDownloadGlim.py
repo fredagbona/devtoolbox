@@ -12,7 +12,8 @@ PAYLOAD = b'fixture disk image\n'
 
 class DownloadTests(unittest.TestCase):
     def run_case(self, arch='arm64', translated='0', platform='Darwin',
-                 corrupt=False, existing=None, wrong_name=False):
+                 corrupt=False, existing=None, wrong_name=False,
+                 no_hardlinks=False, race_before_move=False):
         with tempfile.TemporaryDirectory(prefix='glim-test-') as tmp:
             root = Path(tmp)
             bins = root / 'bin'
@@ -27,10 +28,20 @@ class DownloadTests(unittest.TestCase):
             fixtures = {
                 'uname': '#!/bin/bash\nif [[ "$1" == -s ]]; then echo "$GLIM_TEST_PLATFORM"; else echo "$GLIM_TEST_ARCH"; fi\n',
                 'sysctl': '#!/bin/bash\necho "$GLIM_TEST_TRANSLATED"\n',
+                'ln': '#!/bin/bash\n[[ "$GLIM_TEST_NO_HARDLINKS" == 1 ]] && exit 1\nexec /bin/ln "$@"\n',
+                'mv': '''#!/usr/bin/env python3
+import os, subprocess, sys
+from pathlib import Path
+if os.environ['GLIM_TEST_MOVE_RACE'] == '1':
+    Path(os.environ['GLIM_TEST_DESTINATION']).write_bytes(b'raced copy')
+sys.exit(subprocess.run(['/bin/mv', *sys.argv[1:]]).returncode)
+''',
                 'curl': '''#!/usr/bin/env python3
 import os, sys
 from pathlib import Path
 args = sys.argv[1:]
+if not args or args[0] != '-q':
+    raise SystemExit('curl must disable its config before other options')
 url = args[-1]
 with open(os.environ['GLIM_TEST_LOG'], 'a') as log:
     log.write(url + '\\n')
@@ -55,6 +66,9 @@ else:
                        GLIM_TEST_TRANSLATED=translated, GLIM_TEST_LOG=str(log),
                        GLIM_TEST_HASH=hashlib.sha256(PAYLOAD).hexdigest(),
                        GLIM_TEST_WRONG_NAME=str(int(wrong_name)),
+                       GLIM_TEST_NO_HARDLINKS=str(int(no_hardlinks)),
+                       GLIM_TEST_MOVE_RACE=str(int(race_before_move)),
+                       GLIM_TEST_DESTINATION=str(destination),
                        GLIM_TEST_CORRUPT=str(int(corrupt)))
             result = subprocess.run(['bash', str(SCRIPT), '--output-dir', str(output)],
                                     env=env, capture_output=True, text=True)
@@ -109,6 +123,16 @@ else:
         self.assertNotEqual(result.returncode, 0)
         self.assertIsNone(data)
         self.assertEqual(urls, [])
+
+    def test_volume_without_hardlinks(self):
+        result, data, _ = self.run_case(no_hardlinks=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(data, PAYLOAD)
+
+    def test_move_fallback_preserves_raced_file(self):
+        result, data, _ = self.run_case(no_hardlinks=True, race_before_move=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(data, b'raced copy')
 
 
 if __name__ == '__main__':
